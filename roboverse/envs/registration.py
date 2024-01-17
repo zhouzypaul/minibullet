@@ -1032,7 +1032,7 @@ ENVIRONMENT_SPECS = (
         'kwargs': {'reward_type': 'pick_place',
                    'control_mode': 'discrete_gripper',
 
-                   'object_names': ('gatorade', 'jar'),
+                   'object_names': ('gatorade', 'bullet_vase'),
                    'object_scales': (0.7, 0.7),
                    'target_object': 'gatorade',
                    'load_tray': False,
@@ -1058,7 +1058,103 @@ ENVIRONMENT_SPECS = (
                    'container_name': 'bowl_small',
                    }
     },
-        {
+    {
+        'id': 'PutAerointoBowl-v0',
+        'entry_point': 'roboverse.envs.widow250_pickplace:Widow250PickPlaceEnv',
+        'kwargs': {'reward_type': 'pick_place',
+                   'control_mode': 'discrete_gripper',
+
+                   'object_names': ('aero_cylinder', 'conic_bin'),
+                   'object_scales': (0.7, 0.7),
+                   'target_object': 'aero_cylinder',
+                   'load_tray': False,
+                   'object_position_low': (.49, .18, -.30),
+                   'object_position_high': (.59, .27, -.30),
+
+                   'container_name': 'bowl_small',
+                   }
+    },
+    {
+        'id': 'Putbeehive_funnelintoBowl-v0',
+        'entry_point': 'roboverse.envs.widow250_pickplace:Widow250PickPlaceEnv',
+        'kwargs': {'reward_type': 'pick_place',
+                   'control_mode': 'discrete_gripper',
+
+                   'object_names': ('beehive_funnel', 'toilet_bowl'),
+                   'object_scales': (0.7, 0.7),
+                   'target_object': 'beehive_funnel',
+                   'load_tray': False,
+                   'object_position_low': (.49, .18, -.30),
+                   'object_position_high': (.59, .27, -.30),
+
+                   'container_name': 'bowl_small',
+                   }
+    },
+    {
+        'id': 'Putpacifier_vaseintoBowl-v0',
+        'entry_point': 'roboverse.envs.widow250_pickplace:Widow250PickPlaceEnv',
+        'kwargs': {'reward_type': 'pick_place',
+                   'control_mode': 'discrete_gripper',
+
+                   'object_names': ('pacifier_vase', 'colunnade_top'),
+                   'object_scales': (0.7, 0.7),
+                   'target_object': 'pacifier_vase',
+                   'load_tray': False,
+                   'object_position_low': (.49, .18, -.30),
+                   'object_position_high': (.59, .27, -.30),
+
+                   'container_name': 'bowl_small',
+                   }
+    },
+    {
+        'id': 'Putcrooked_lid_trash_canlintoBowl-v0',
+        'entry_point': 'roboverse.envs.widow250_pickplace:Widow250PickPlaceEnv',
+        'kwargs': {'reward_type': 'pick_place',
+                   'control_mode': 'discrete_gripper',
+
+                   'object_names': ('crooked_lid_trash_can', 'pepsi_bottle'),
+                   'object_scales': (0.7, 0.7),
+                   'target_object': 'crooked_lid_trash_can',
+                   'load_tray': False,
+                   'object_position_low': (.49, .18, -.30),
+                   'object_position_high': (.59, .27, -.30),
+
+                   'container_name': 'bowl_small',
+                   }
+    },
+    {
+        'id': 'Puttongue_chairintoBowl-v0',
+        'entry_point': 'roboverse.envs.widow250_pickplace:Widow250PickPlaceEnv',
+        'kwargs': {'reward_type': 'pick_place',
+                   'control_mode': 'discrete_gripper',
+
+                   'object_names': ('tongue_chair', 'bongo_drum_bowl'),
+                   'object_scales': (0.7, 0.7),
+                   'target_object': 'tongue_chair',
+                   'load_tray': False,
+                   'object_position_low': (.49, .18, -.30),
+                   'object_position_high': (.59, .27, -.30),
+
+                   'container_name': 'bowl_small',
+                   }
+    },
+    {
+        'id': 'Putvintage_canoeintoBowl-v0',
+        'entry_point': 'roboverse.envs.widow250_pickplace:Widow250PickPlaceEnv',
+        'kwargs': {'reward_type': 'pick_place',
+                   'control_mode': 'discrete_gripper',
+
+                   'object_names': ('vintage_canoe', 't_cup'),
+                   'object_scales': (0.7, 0.7),
+                   'target_object': 'vintage_canoe',
+                   'load_tray': False,
+                   'object_position_low': (.49, .18, -.30),
+                   'object_position_high': (.59, .27, -.30),
+
+                   'container_name': 'bowl_small',
+                   }
+    },
+    {
         'id': 'PutBallintoBowlFixed-v0',
         'entry_point': 'roboverse.envs.widow250_pickplace:Widow250PickPlaceEnv',
         'kwargs': {'reward_type': 'pick_place',

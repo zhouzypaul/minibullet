@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from roboverse.utils import get_timestamp
 # import railrl.torch.pytorch_util as ptu
-EPSILON = 0.1
+EPSILON = 0.01
 
 # TODO(avi): Clean this up
 # NFS_PATH = '/nfs/kun1/users/avi/imitation_datasets/'
@@ -271,7 +271,6 @@ if __name__ == "__main__":
     parser.add_argument("--run_until_end", action='store_true', default=False)
     parser.add_argument("--delay", type=int, default=0)
     parser.add_argument('--p_place_correct', type=float, default=0.0)
-    parser.add_argument('--trunc', type=int, default=0)
     parser.add_argument('--ignore_done', action='store_true')
     parser.add_argument('--use_timestamp', action='store_true')
 
