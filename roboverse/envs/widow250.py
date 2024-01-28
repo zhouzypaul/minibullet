@@ -158,7 +158,8 @@ class Widow250Env(gym.Env, Serializable):
     def disable_render(self):
         self.render_enabled = False
 
-    def _load_meshes(self):
+    def _load_meshes(self, load_object_positions=None):
+        """assumes that the object_orientation and object scales dont' change"""
         self.table_id = objects.table()
         self.robot_id = objects.widow250()
 
@@ -169,10 +170,13 @@ class Widow250Env(gym.Env, Serializable):
         if self.in_vr_replay:
             object_positions = self.original_object_positions
         else:
-            object_positions = object_utils.generate_object_positions(
-                self.object_position_low, self.object_position_high,
-                self.num_objects,
-            )
+            if load_object_positions is None:
+                object_positions = object_utils.generate_object_positions(
+                    self.object_position_low, self.object_position_high,
+                    self.num_objects,
+                )
+            else:
+                object_positions = load_object_positions
             self.original_object_positions = object_positions
         for object_name, object_position in zip(self.object_names,
                                                 object_positions):
@@ -183,10 +187,10 @@ class Widow250Env(gym.Env, Serializable):
                 scale=self.object_scales[object_name])
             bullet.step_simulation(self.num_sim_steps_reset)
 
-    def reset(self):
+    def reset(self, object_positions=None):
         bullet.reset()
         bullet.setup_headless()
-        self._load_meshes()
+        self._load_meshes(load_object_positions=object_positions)
         bullet.reset_robot(
             self.robot_id,
             self.reset_joint_indices,
@@ -310,6 +314,9 @@ class Widow250Env(gym.Env, Serializable):
             self.target_object, self.objects, self.robot_id,
             self.end_effector_index, self.grasp_success_height_threshold,
             self.grasp_success_object_gripper_threshold)
+
+        info['original_object_positions'] = self.original_object_positions
+        
         return info
 
     def render_obs(self):

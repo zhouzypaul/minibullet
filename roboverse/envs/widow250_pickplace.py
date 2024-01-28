@@ -55,7 +55,7 @@ class Widow250PickPlaceEnv(Widow250Env):
 
         super(Widow250PickPlaceEnv, self).__init__(**kwargs)
 
-    def _load_meshes(self):
+    def _load_meshes(self, load_object_positions=None):
         self.table_id = objects.table()
         self.robot_id = objects.widow250()
         self.objects = {}
@@ -100,8 +100,8 @@ class Widow250PickPlaceEnv(Widow250Env):
                                                      self.container_scale)
         bullet.step_simulation(self.num_sim_steps_reset)
 
-        for object_name, object_position in zip(self.object_names,
-                                                self.original_object_positions):
+        object_positions = load_object_positions or self.original_object_positions
+        for object_name, object_position in zip(self.object_names, object_positions):
             self.objects[object_name] = object_utils.load_object(
                 object_name,
                 object_position,
