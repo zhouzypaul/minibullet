@@ -154,7 +154,12 @@ def main(args):
         policy_class = policies[args.policy_name]
         transpose_image = False
 
-        env = roboverse.make(args.env_name, gui=args.gui, transpose_image=transpose_image, terminate_on_success=not args.run_until_end)
+        env = roboverse.make(
+            args.env_name, 
+            gui=args.gui, 
+            transpose_image=transpose_image, 
+            terminate_on_success=not args.run_until_end
+        )
         policy = policy_class(env)
 
         if args.delay > 0:
