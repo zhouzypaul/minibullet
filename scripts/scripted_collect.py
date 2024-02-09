@@ -2,6 +2,7 @@ import numpy as np
 import time
 import os
 import os.path as osp
+import multiprocessing
 import roboverse
 from roboverse.policies import policies
 import argparse
@@ -128,6 +129,48 @@ def collect_one_traj(env, policy, num_timesteps, noise,
     return traj, success, num_steps
 
 
+def collect_trajectories(
+    fn_args
+):
+    args, env, policy, num_saved, accept_trajectory_key, transpose_image, use_pretrained_policy, data_queue = fn_args
+    data = []
+    num_attempts = 0
+    num_success = 0
+    lock = multiprocessing.Lock()
+    
+    # NOTE: there is a problem with this locking mechanism, and different processes can
+    # collect trajs for the same num_saved.value. But we are ignoring that for now.
+    # The effect is that we will collect more trajs than we asked for...
+    
+    while num_saved.value < args.num_trajectories:
+        collect_current_traj = False
+        num_attempts += 1
+        traj, success, num_steps = collect_one_traj(
+            env, policy, args.num_timesteps, args.noise,
+            accept_trajectory_key, transpose_image,
+            use_pretrained_policy, ignore_done=args.ignore_done)
+
+        if args.save_failonly:
+            if not success:
+                collect_current_traj = True
+            else:
+                num_success += 1
+        else:
+            if success:
+                num_success += 1
+                collect_current_traj = True
+            elif args.save_all:
+                collect_current_traj = True
+        
+        if collect_current_traj:
+            data.append(traj)
+            with lock:
+                num_saved.value += 1
+            print(f"num_saved: {num_saved.value}")
+
+    data_queue.put((data, num_attempts, num_success))
+
+
 def main(args):
 
     timestamp = get_timestamp()
@@ -146,7 +189,6 @@ def main(args):
         policy = params['trainer/bijector']
         use_pretrained_policy = True
         transpose_image=True
-        ptu.set_gpu_mode(True)
         env = roboverse.make(args.env_name, gui=args.gui, transpose_image=transpose_image)
         print("reward_type", env.reward_type)
     else:
@@ -191,52 +233,53 @@ def main(args):
 
     if args.reward_type:
         env.reward_type = args.reward_type
+    
+    manager = multiprocessing.Manager()
+    num_saved = manager.Value('i', 0)
+    data_queue = manager.Queue()
+    pool = multiprocessing.Pool()
 
-    num_success = 0
-    num_saved = 0
-    num_attempts = 0
     accept_trajectory_key = args.accept_trajectory_key
+    
+    results = pool.imap(
+        collect_trajectories,
+        [(
+            args, 
+            env, 
+            policy, 
+            num_saved, 
+            accept_trajectory_key, 
+            transpose_image, 
+            use_pretrained_policy, 
+            data_queue
+        )] * args.num_processes
+    )
 
-    progress_bar = tqdm(total=args.num_trajectories)
+    for _ in results:
+        pass  # This loop is just to consume the results
+    
+    # gather results from multiprocessing
+    pool.close()
+    pool.join()
 
-    while num_saved < args.num_trajectories:
-        num_attempts += 1
-        print('num attemtps', num_attempts)
-        traj, success, num_steps = collect_one_traj(
-            env, policy, args.num_timesteps, args.noise,
-            accept_trajectory_key, transpose_image,
-            use_pretrained_policy, ignore_done=args.ignore_done)
+    all_data = []
+    num_attempts_total = 0
+    num_success_total = 0
+    while not data_queue.empty():
+        data, num_attempts, num_success = data_queue.get()
+        all_data.extend(data)
+        num_attempts_total += num_attempts
+        num_success_total += num_success
 
-        print('success', success)
-        if args.save_failonly:
-            print('use failonly')
-            if not success:
-                data.append(traj)
-                num_saved += 1
-                progress_bar.update(1)
-            else:
-                num_success += 1
-        else:
-            if success:
-                if args.gui:
-                    print("num_timesteps of success: ", num_steps)
-                    print('num tsteps', len(traj['actions']))
-                data.append(traj)
-                num_success += 1
-                num_saved += 1
-                progress_bar.update(1)
-            elif args.save_all:
-                data.append(traj)
-                num_saved += 1
-                progress_bar.update(1)
+    if num_attempts_total != 0:
+        success_rate = num_success_total / num_attempts_total
+    else:
+        success_rate = 0  # Set success rate to 0 if no attempts were made
+    if args.gui:
+        print("success rate: {}".format(success_rate))
 
-        if args.gui:
-            print("success rate: {}".format(num_success/(num_attempts)))
-
-    progress_bar.close()
-    print("success rate: {}".format(num_success / (num_attempts)))
-
-    pivot = int(len(data)*0.9)
+    print(f"collected {num_success_total} successful trajectories")
+    pivot = int(len(all_data)*0.9)
 
     if args.use_timestamp:
         save_path = data_save_path + '/{}_{}/train'.format(args.env_name, timestamp)
@@ -245,7 +288,7 @@ def main(args):
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     print(save_path)
-    np.save(save_path + '/out.npy', data[:pivot])
+    np.save(save_path + '/out.npy', all_data[:pivot])
 
     if args.use_timestamp:
         save_path = data_save_path + '/{}_{}/val'.format(args.env_name, timestamp)
@@ -254,7 +297,7 @@ def main(args):
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     print(save_path)
-    np.save(save_path + '/out.npy', data[pivot:])
+    np.save(save_path + '/out.npy', all_data[pivot:])
 
 
 if __name__ == "__main__":
@@ -278,6 +321,7 @@ if __name__ == "__main__":
     parser.add_argument('--p_place_correct', type=float, default=0.0)
     parser.add_argument('--ignore_done', action='store_true')
     parser.add_argument('--use_timestamp', action='store_true')
+    parser.add_argument('--num_processes', type=int, default=multiprocessing.cpu_count())
 
     args = parser.parse_args()
 
